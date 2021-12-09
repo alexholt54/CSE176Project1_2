@@ -1,7 +1,7 @@
 # CSE176Project1_2
 CSE 176 Project 1 Part 2
 
-This project focused on doing cross-validation in order to find the best hyperparameters for training a classifiers and regression models.
+This project focused on doing cross-validation in order to find the best hyperparameters for training classifiers and regression models.
 
 There will be 2 algorithms used in this project:
 1. XGBoost
