@@ -12,3 +12,7 @@ There will be 4 total datasets used in this project:
 2. MNIST-LeNet5.mat
 3. Character Font Images Dataset: https://archive.ics.uci.edu/ml/datasets/Character+Font+Images
 4. Financial Indicators of US Stocks https://www.kaggle.com/cnic92/200-financial-indicators-of-us-stocks-20142018?select=2018_Financial_Data.csv
+
+There are two data files used in this project that were not able to be included in the repo:
+1. MNIST-LeNet5.mat
+2. OCRB.csv
