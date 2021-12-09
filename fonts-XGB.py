@@ -20,10 +20,8 @@ def main():
     print(tempdf)
     tempdf = tempdf.drop(['orientation', 'm_top', 'm_left', 'originalH', 'originalW', 'h', 'w', 'fontVariant'], axis=1)
     print(tempdf) """ 
-
     path = os.getcwd()
     csv_files = glob.glob(os.path.join("datasets/fonts", "*.csv"))
-
     mainDF = pd.DataFrame()
 
     for f in csv_files:

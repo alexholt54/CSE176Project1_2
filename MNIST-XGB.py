@@ -99,7 +99,7 @@ def main():
     # lenet_validation, lenet_validation_labels
     # lenet_test, lenet_test_labels
 
-    rates = list(range(minLearn, maxLearn, 0.1))
+    rates = np.arange(0.1, 1.1, 0.1)
     for rate in rates:
         model = xgb.XGBClassifier(learning_rate = rate).fit(data, label)
         lenetModel = xgb.XGBClassifier(learning_rate = rate).fit(lenet, lenet_labels)
@@ -143,7 +143,7 @@ def main():
     minL2 = 0
     maxL2 = 0.1
 
-    L2s = list(range(minL2, maxL2, 0.01))
+    L2s = np.arange(0.0, 1.1, 0.1)
 
     valError = pd.DataFrame([], columns = ["l2", "error"])
     valErrorLenet = pd.DataFrame([], columns = ["l2", "error"])

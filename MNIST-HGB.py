@@ -55,7 +55,7 @@ def main():
     valError = pd.DataFrame([], columns = ["trees", "error"])
     valErrorLenet = pd.DataFrame([], columns = ["trees", "error"])
 
-    for tree in trees:
+    ''' for tree in trees:
         model = HistGradientBoostingClassifier(max_iter = tree).fit(data, label)
         lenetModel = HistGradientBoostingClassifier(max_iter = tree).fit(lenet, lenet_labels)
 
@@ -70,7 +70,7 @@ def main():
     ax = valError.plot(x = "trees", y = "error", kind = "line", color = "red", label = "Pixel Features")
     valErrorLenet.plot(x = "trees", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
                         title = "Validation Error With Varying Number of Trees", ylabel = "Validation Error", xlabel = "Number of Trees")
-    plt.show()
+    plt.show() '''
 
     minLearn = 0.1
     maxLearn = 1
@@ -88,7 +88,7 @@ def main():
     # lenet_validation, lenet_validation_labels
     # lenet_test, lenet_test_labels
 
-    rates = list(range(minLearn, maxLearn, 0.1))
+    rates = np.arange(0.1, 1.1, 0.1)
     for rate in rates:
         model = HistGradientBoostingClassifier(learning_rate = rate).fit(data, label)
         lenetModel = HistGradientBoostingClassifier(learning_rate = rate).fit(lenet, lenet_labels)
@@ -132,7 +132,7 @@ def main():
     minL2 = 0
     maxL2 = 0.1
 
-    L2s = list(range(minL2, maxL2, 0.01))
+    L2s = np.arange(0.0, 1.1, 0.1)
 
     valError = pd.DataFrame([], columns = ["l2", "error"])
     valErrorLenet = pd.DataFrame([], columns = ["l2", "error"])
