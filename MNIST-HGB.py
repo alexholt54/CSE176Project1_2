@@ -102,9 +102,56 @@ def main():
         print(rate)
     ax = valError.plot(x = "eta", y = "error", kind = "line", color = "red", label = "Pixel Features")
     valErrorLenet.plot(x = "eta", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
-                        title = "Validation Error With Varying Learning Rates", ylabel = "Validation Error", xlabel = "Learning Rate")
+                        title = "Validation Error With Varying Learning Rates", ylabel = "Validation Error", xlabel = "Learning Rates")
     plt.show()
 
+    minDepth = 0
+    depth = 1000
+
+    valError = pd.DataFrame([], columns = ["depth", "error"])
+    valErrorLenet = pd.DataFrame([], columns = ["depth", "error"])
+
+    depths = list(range(minDepth, depth, 100))
+
+    for depth in depths:
+        model = HistGradientBoostingClassifier(max_depth = depth).fit(data, label)
+        lenetModel = HistGradientBoostingClassifier(max_depth = depth).fit(lenet, lenet_labels)
+
+        row = {"depth" : rate, "error" : 1 - model.score(validation, validation_labels)}
+        lenet_row = {"depth" : rate, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
+
+        valError = valError.append(row, ignore_index=True)
+        valErrorLenet = valErrorLenet.append(lenet_row, ignore_index=True)
+
+        print(depth)
+    ax = valError.plot(x = "depth", y = "error", kind = "line", color = "red", label = "Pixel Features")
+    valErrorLenet.plot(x = "depth", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
+                        title = "Validation Error With Varying Max Depth Values", ylabel = "Validation Error", xlabel = "Max Depth Values")
+    plt.show()
+    
+    minL2 = 0
+    maxL2 = 0.1
+
+    L2s = list(range(minL2, maxL2, 0.01))
+
+    valError = pd.DataFrame([], columns = ["l2", "error"])
+    valErrorLenet = pd.DataFrame([], columns = ["l2", "error"])
+
+    for l2 in L2s:
+        model = HistGradientBoostingClassifier(l2_regularization=l2).fit(data, label)
+        lenetModel = HistGradientBoostingClassifier(l2_regularization=l2).fit(lenet, lenet_labels)
+
+        row = {"l2" : rate, "error" : 1 - model.score(validation, validation_labels)}
+        lenet_row = {"l2" : rate, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
+
+        valError = valError.append(row, ignore_index=True)
+        valErrorLenet = valErrorLenet.append(lenet_row, ignore_index=True)
+
+        print(depth)
+    ax = valError.plot(x = "l2", y = "error", kind = "line", color = "red", label = "Pixel Features")
+    valErrorLenet.plot(x = "l2", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
+                        title = "Validation Error With Varying L2 Regularization", ylabel = "Validation Error", xlabel = "L2 Regularization Values")
+    plt.show()
 
 
 def normalizeData(data):
