@@ -52,7 +52,7 @@ def main():
 
     # Validation set for lenet
     lenet_validation = data_lenet[num_training:]
-    lenet_labels_validation = lenet_labels[num_training:]
+    lenet_labels_validation = label_lenet[num_training:]
 
     # Extract test set to use at the end
     data_test = mnist["test_fea"]
@@ -88,8 +88,32 @@ def main():
     # lenet_validation, lenet_labels_validation
     # lenet_test, lenet_label_test
 
-    # Change parameters here
-    model = HistGradientBoostingClassifier()
+    minTrees = 1
+    maxTrees = 500
+
+    trees = list(range(minTrees, maxTrees))
+
+    valError = pd.DataFrame([], columns = ["trees", "error"])
+    valErrorLenet = pd.DataFrame([], columns = ["trees", "error"])
+
+    for tree in trees:
+        # Change parameters here
+        model = HistGradientBoostingClassifier(max_iter = tree).fit(data_train, labels_train)
+        lenet = HistGradientBoostingClassifier(max_iter = tree).fit(lenet_train, lenet_labels)
+
+        row = {"trees" : tree, "error" : 1 - model.score(data_validation, labels_validation)}
+        lenet_row = {"trees" : tree, "error" : 1 - lenet.score(lenet_validation, lenet_labels_validation)}
+
+        valError = valError.append(row, ignore_index=True)
+        valErrorLenet = valError.append(lenet_row, ignore_index=True)
+
+        print(tree)
+
+    ax = valError.plot(x = "trees", y = "error", kind = "line", color = "red", label = "Pixel Features")
+    valErrorLenet.plot(x = "trees", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
+                        title = "Validation Error With Varying Number of Trees", ylabel = "Validation Error", xlabel = "Number of Trees")
+    plt.show()
+
 
 if __name__ == "__main__":
     main()
