@@ -14,13 +14,13 @@ def main():
     # 200 images from each file ~30k
     #70 for validation/testing
 
-    
-    """     myData = pd.read_csv("datasets/fonts/AGENCY.csv")
+    # Run this code to get dataset
+    '''     myData = pd.read_csv("datasets/fonts/AGENCY.csv")
     tempdf = pd.DataFrame(myData)
     print(tempdf)
     tempdf = tempdf.drop(['orientation', 'm_top', 'm_left', 'originalH', 'originalW', 'h', 'w', 'fontVariant'], axis=1)
-    print(tempdf) """ 
-    ''' path = os.getcwd()
+    print(tempdf)
+    path = os.getcwd()
     csv_files = glob.glob(os.path.join("datasets/fonts", "*.csv"))
     mainDF = pd.DataFrame()
 
@@ -44,8 +44,6 @@ def main():
 
     labels = df["font"].values
     labels = labels.flatten()
-
-    print(np.shape(labels))
 
 
 

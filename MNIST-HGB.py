@@ -55,7 +55,7 @@ def main():
     valError = pd.DataFrame([], columns = ["trees", "error"])
     valErrorLenet = pd.DataFrame([], columns = ["trees", "error"])
 
-    ''' for tree in trees:
+    for tree in trees:
         model = HistGradientBoostingClassifier(max_iter = tree).fit(data, label)
         lenetModel = HistGradientBoostingClassifier(max_iter = tree).fit(lenet, lenet_labels)
 
@@ -70,7 +70,7 @@ def main():
     ax = valError.plot(x = "trees", y = "error", kind = "line", color = "red", label = "Pixel Features")
     valErrorLenet.plot(x = "trees", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
                         title = "Validation Error With Varying Number of Trees", ylabel = "Validation Error", xlabel = "Number of Trees")
-    plt.show() '''
+    plt.show()
 
     # For MNIST:
     # data, label
@@ -82,7 +82,7 @@ def main():
     # lenet_validation, lenet_validation_labels
     # lenet_test, lenet_test_labels
 
-    ''' minLearn = 0.1
+    minLearn = 0.1
     maxLearn = 1.1
 
     valError = pd.DataFrame([], columns = ["eta", "error"])
@@ -103,15 +103,15 @@ def main():
     ax = valError.plot(x = "eta", y = "error", kind = "line", color = "red", label = "Pixel Features")
     valErrorLenet.plot(x = "eta", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
                         title = "Validation Error With Varying Learning Rates", ylabel = "Validation Error", xlabel = "Learning Rates")
-    plt.show() '''
+    plt.show()
 
-    minDepth = 1
-    depth = 10
+    minDepth = 10
+    depth = 100
 
     valError = pd.DataFrame([], columns = ["depth", "error"])
     valErrorLenet = pd.DataFrame([], columns = ["depth", "error"])
 
-    depths = list(range(minDepth, depth, 1))
+    depths = list(range(minDepth, depth, 10))
 
     for depth in depths:
         model = HistGradientBoostingClassifier(max_depth = depth).fit(data, label)
@@ -129,10 +129,10 @@ def main():
                         title = "Validation Error With Varying Max Depth Values", ylabel = "Validation Error", xlabel = "Max Depth Values")
     plt.show()
     
-    minL2 = 0
-    maxL2 = 0.1
+    minL2 = 0.01
+    maxL2 = 0.11
 
-    L2s = np.arange(0.0, 1.1, 0.1)
+    L2s = np.arange(minL2, maxL2, 0.01)
 
     valError = pd.DataFrame([], columns = ["l2", "error"])
     valErrorLenet = pd.DataFrame([], columns = ["l2", "error"])
