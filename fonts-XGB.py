@@ -42,6 +42,13 @@ def main():
 
     df = pd.read_csv("datasets/allFont.csv")
 
+    labels = df["font"].values
+    labels = labels.flatten()
+
+    print(np.shape(labels))
+
+
+
 
     # Change parameters here
     # Model = xgb.XGBClassifier()
