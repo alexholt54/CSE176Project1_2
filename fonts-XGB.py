@@ -20,7 +20,7 @@ def main():
     print(tempdf)
     tempdf = tempdf.drop(['orientation', 'm_top', 'm_left', 'originalH', 'originalW', 'h', 'w', 'fontVariant'], axis=1)
     print(tempdf) """ 
-    path = os.getcwd()
+    ''' path = os.getcwd()
     csv_files = glob.glob(os.path.join("datasets/fonts", "*.csv"))
     mainDF = pd.DataFrame()
 
@@ -33,12 +33,14 @@ def main():
         mainDF = mainDF.append(df)
 
     print("/n")
-    print(mainDF)
+    print(mainDF) '''
 
     #mainDF.to_csv('allFont.csv')
 
     #train_data = pd.read_csv("datasets/fonts/AGENCY.csv")
     #test_data = pd.read_csv("")
+
+    df = pd.read_csv("datasets/allFont.csv")
 
 
     # Change parameters here

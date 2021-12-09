@@ -128,8 +128,8 @@ def main():
         model = xgb.XGBClassifier(max_depth = depth).fit(data, label)
         lenetModel = xgb.XGBClassifier(max_depth = depth).fit(lenet, lenet_labels)
 
-        row = {"depth" : rate, "error" : 1 - model.score(validation, validation_labels)}
-        lenet_row = {"depth" : rate, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
+        row = {"depth" : depth, "error" : 1 - model.score(validation, validation_labels)}
+        lenet_row = {"depth" : depth, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
 
         valError = valError.append(row, ignore_index=True)
         valErrorLenet = valErrorLenet.append(lenet_row, ignore_index=True)
@@ -152,8 +152,8 @@ def main():
         model = xgb.XGBClassifier(l2_regularization=l2).fit(data, label)
         lenetModel = xgb.XGBClassifier(l2_regularization=l2).fit(lenet, lenet_labels)
 
-        row = {"l2" : rate, "error" : 1 - model.score(validation, validation_labels)}
-        lenet_row = {"l2" : rate, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
+        row = {"l2" : l2, "error" : 1 - model.score(validation, validation_labels)}
+        lenet_row = {"l2" : l2, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
 
         valError = valError.append(row, ignore_index=True)
         valErrorLenet = valErrorLenet.append(lenet_row, ignore_index=True)
