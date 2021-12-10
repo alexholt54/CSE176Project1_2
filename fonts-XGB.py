@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
+from sklearn import preprocessing
 import os
 import glob
 import csv
@@ -21,12 +22,13 @@ def main():
     labels = df["font"].values
     labels = labels.flatten()
 
-    fonts = []
-    for label in labels:
-        if label not in fonts:
-            fonts.append(label)
+    print(labels)
 
-    print(np.shape(fonts))
+    le = preprocessing.LabelEncoder()
+    labels = le.transform(labels)
+
+    print(labels)
+    
     # Change parameters here
     # Model = xgb.XGBClassifier()
 
