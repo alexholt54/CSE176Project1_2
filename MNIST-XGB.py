@@ -125,8 +125,6 @@ def main():
     ax = valError.plot(x = "trees", y = "error", kind = "line", color = "red", label = "Pixel Features")
     valErrorLenet.plot(x = "trees", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
                         title = "Validation Error With Varying Number of Trees", ylabel = "Validation Error", xlabel = "Number of Trees")
-    plt.show()
-    quit()
 
     minLearn = 0.1
     maxLearn = 1

@@ -17,11 +17,7 @@ def main():
 
     print(np.shape(df))
 
-    df = df.dropna()
-
-    print(np.shape(df))
-
-    df = df.dropna(axis=1)
+    df = df.fillna(0)
 
     print(np.shape(df))
 
