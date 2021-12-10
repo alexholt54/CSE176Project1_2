@@ -21,6 +21,12 @@ def main():
     labels = df["font"].values
     labels = labels.flatten()
 
+    fonts = []
+    for label in labels:
+        if label not in fonts:
+            fonts.append(label)
+
+    print(np.shape(fonts))
     # Change parameters here
     # Model = xgb.XGBClassifier()
 
