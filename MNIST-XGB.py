@@ -87,7 +87,7 @@ def main():
     test_labels = test_labels[6000:10000]
 
     lenet_test = lenet_test[6000:10000]
-    lenet_test_lables = lenet_test_labels[6000:10000]
+    lenet_test_labels = lenet_test_labels[6000:10000]
 
     # For MNIST:
     # train, train_label
@@ -98,6 +98,12 @@ def main():
     # lenet, lenet_labels
     # lenet_validation, lenet_validation_labels
     # lenet_test, lenet_test_labels
+
+    model = xgb.XGBClassifier(n_estimators = 600, learning_rate = 0.01, use_label_encoder=False)
+    model.fit(lenet, lenet_labels)
+
+    print(1 - model.score(lenet_test, lenet_test_labels))
+    quit()
 
     minTrees = 100
     maxTrees = 1000

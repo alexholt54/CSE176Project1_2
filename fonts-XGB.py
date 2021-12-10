@@ -41,37 +41,37 @@ def main():
 
     for font in fontNames:
         temp = df[df['font']==font]
-        temp = temp.head(200)
+        temp = temp.head(400)
         temp = temp.drop(['font', 'Unnamed: 0'], axis=1)
         temp = np.array(temp)
         trainingSet.extend(temp)
 
     for font in fontNames:
         temp = df[df['font']==font]
-        temp = temp.iloc[201:266]
+        temp = temp.iloc[400:530]
         temp = temp.drop(['font', 'Unnamed: 0'], axis=1)
         temp = np.array(temp)
         validationSet.extend(temp)
 
     for font in fontNames:
         temp = df[df['font']==font]
-        temp = temp.iloc[267:307]
+        temp = temp.iloc[530:610]
         temp = temp.drop(['font', 'Unnamed: 0'], axis=1)
         temp = np.array(temp)
         testingSet.extend(temp)
 
     for i in range(153):
-        temp = [i] * 200
+        temp = [i] * 400
         temp = np.array(temp)
         trainingLabels.extend(temp)
 
     for i in range(153):
-        temp = [i] * 65
+        temp = [i] * 130
         temp = np.array(temp)
         validationLabels.extend(temp)
 
     for i in range(153):
-        temp = [i] * 40
+        temp = [i] * 80
         temp = np.array(temp)
         testingLabels.extend(temp)
 
@@ -128,6 +128,15 @@ def loadDataFile():
         mainDF = mainDF.append(df)
 
     mainDF.to_csv('allFont.csv')
+
+def normalizeData(data):
+    data = (data / 255)
+    train_mean = data.mean(axis = 0)
+    train_std = data.std(axis = 0)
+    train_std[train_std == 0] = 1
+    data -= train_mean
+    data /= train_std
+    return data
 
 
 
