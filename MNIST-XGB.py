@@ -17,10 +17,46 @@ def main():
     label = mnist["train_gnd"]
     label = label.flatten()
 
+    image1s = data[label == 1]
+    image2s = data[label == 2]
+    image3s = data[label == 3]
+    image4s = data[label == 4]
+    image5s = data[label == 5]
+    image6s = data[label == 6]
+    image7s = data[label == 7]
+    image8s = data[label == 8]
+    image9s = data[label == 9]
+    image10s = data[label == 10]
+
+    numImages = 3000
+
+    train = np.concatenate((image1s[0:numImages], image2s[0:numImages], image3s[0:numImages], image4s[0:numImages], image5s[0:numImages], image6s[0:numImages], image7s[0:numImages],
+                            image8s[0:numImages], image9s[0:numImages], image10s[0:numImages]))
+
+    train_label = np.concatenate(([0] * numImages, [1] * numImages, [2] * numImages, [3] * numImages, [4] * numImages, [5] * numImages, [6] * numImages, [7] * numImages, [8] * numImages,
+                                    [9] * numImages))
+
     lenet = mnistLeNet5["train_fea"]
     lenet = normalizeData(lenet)
     lenet_labels = mnistLeNet5["train_gnd"]
     lenet_labels = lenet_labels.flatten()
+
+    image1s = lenet[lenet_labels == 1]
+    image2s = lenet[lenet_labels == 2]
+    image3s = lenet[lenet_labels == 3]
+    image4s = lenet[lenet_labels == 4]
+    image5s = lenet[lenet_labels == 5]
+    image6s = lenet[lenet_labels == 6]
+    image7s = lenet[lenet_labels == 7]
+    image8s = lenet[lenet_labels == 8]
+    image9s = lenet[lenet_labels == 9]
+    image10s = lenet[lenet_labels == 10]
+
+    lenet = np.concatenate((image1s[0:numImages], image2s[0:numImages], image3s[0:numImages], image4s[0:numImages], image5s[0:numImages], image6s[0:numImages], image7s[0:numImages],
+                            image8s[0:numImages], image9s[0:numImages], image10s[0:numImages]))
+
+    lenet_labels = np.concatenate(([0] * numImages, [1] * numImages, [2] * numImages, [3] * numImages, [4] * numImages, [5] * numImages, [6] * numImages, [7] * numImages, [8] * numImages,
+                                    [9] * numImages))
 
     # Extract Training and Validation Set
     test = mnist["test_fea"]
@@ -28,27 +64,33 @@ def main():
     test_labels = mnist["test_gnd"]
     test_labels = test_labels.flatten()
 
+    for i in range(1, 11):
+        test_labels[test_labels == i] = i - 1
+
     lenet_test = mnistLeNet5["test_fea"]
     lenet_test = normalizeData(lenet_test)
     lenet_test_labels = mnistLeNet5["test_gnd"]
     lenet_test_labels = lenet_test_labels.flatten()
 
-    # Extract 7000 images for validation
-    validation = test[0:7000]
-    validation_labels = test_labels[0:7000]
+    for i in range(1, 11):
+        lenet_test_labels[lenet_test_labels == i] = i - 1
 
-    lenet_validation = lenet_test[0:7000]
-    lenet_validation_labels = lenet_test_labels[0:7000]
+    # Extract 6000 images for validation
+    validation = test[0:6000]
+    validation_labels = test_labels[0:6000]
 
-    # Extract 3000 images for testing
-    test = test[7000:10000]
-    test_labels = test_labels[7000:10000]
+    lenet_validation = lenet_test[0:6000]
+    lenet_validation_labels = lenet_test_labels[0:6000]
 
-    lenet_test = lenet_test[7000:10000]
-    lenet_test_lables = lenet_test_labels[7000:10000]
+    # Extract 4000 images for testing
+    test = test[6000:10000]
+    test_labels = test_labels[6000:10000]
+
+    lenet_test = lenet_test[6000:10000]
+    lenet_test_lables = lenet_test_labels[6000:10000]
 
     # For MNIST:
-    # data, label
+    # train, train_label
     # validation, validation_labels
     # test, test_lables
 
@@ -67,8 +109,10 @@ def main():
 
     for tree in trees:
         # Change parameters here
-        model = xgb.XGBClassifier(n_estimators = tree).fit(data, label)
-        lenetModel = xgb.XGBClassifier(n_estimators = tree).fit(lenet, lenet_labels)
+        model = xgb.XGBClassifier(n_estimators = tree, use_label_encoder=False)
+        model.fit(train, train_label)
+        lenetModel = xgb.XGBClassifier(n_estimators = tree, use_label_encoder=False)
+        lenetModel.fit(lenet, lenet_labels)
 
         row = {"trees" : tree, "error" : 1 - model.score(validation, validation_labels)}
         lenet_row = {"trees" : tree, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
@@ -82,6 +126,7 @@ def main():
     valErrorLenet.plot(x = "trees", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
                         title = "Validation Error With Varying Number of Trees", ylabel = "Validation Error", xlabel = "Number of Trees")
     plt.show()
+    quit()
 
     minLearn = 0.1
     maxLearn = 1
