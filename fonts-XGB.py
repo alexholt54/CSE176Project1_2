@@ -1,4 +1,5 @@
 # Use fonts dataset
+from sklearn.utils import validation
 import xgboost as xgb
 import numpy as np
 import pandas as pd
@@ -17,21 +18,88 @@ def main():
 
     df = pd.read_csv("datasets/allFont.csv")
 
-    print(np.shape(df))
+    #print(np.shape(df))
 
     labels = df["font"].values
     labels = labels.flatten()
 
-    print(labels)
+    #data
+    trainingSet = []
+    validationSet = []
+    testingSet = []
+
+    #labels
+    trainingLabels = []
+    validationLabels = []
+    testingLabels = []
+
+    fontNames = []
+
+    for label in labels:
+        if label not in fontNames:
+            fontNames.append(label)
+
+    for font in fontNames:
+        temp = df[df['font']==font]
+        temp = temp.head(200)
+        temp = np.array(temp)
+        trainingSet.extend(temp)
+
+    for font in fontNames:
+        temp = df[df['font']==font]
+        temp = temp.iloc[201:266]
+        temp = np.array(temp)
+        validationSet.extend(temp)
+
+    for font in fontNames:
+        temp = df[df['font']==font]
+        temp = temp.iloc[267:307]
+        temp = np.array(temp)
+        testingSet.extend(temp)
+
+    for i in range(153):
+        temp = [0] * 200
+        temp = np.array(temp)
+        trainingLabels.extend(temp)
+
+    for i in range(153):
+        temp = [0] * 65
+        temp = np.array(temp)
+        validationLabels.extend(temp)
+
+    for i in range(153):
+        temp = [0] * 40
+        temp = np.array(temp)
+        testingLabels.extend(temp)
+
+    print(np.shape(trainingLabels))
+    print(np.shape(validationLabels))
+    print(np.shape(testingLabels))
+
+    trainingSet = np.array(trainingSet)
+    #print(type(trainingSet))
+    #print(np.shape(trainingSet))
+
+    validationSet = np.array(validationSet)
+    #print(type(validationSet))
+    #print(np.shape(validationSet))
+
+    testingSet = np.array(testingSet)
+    #print(type(testingSet))
+    #print(np.shape(testingSet))
 
     le = preprocessing.LabelEncoder()
     le.fit(labels)
     labels = le.transform(labels)
 
-    print(labels)
+    df.drop(['font'], axis=1)
+
+    #print(np.shape(df))
+
+    #print(labels)
 
     # Change parameters here
-    # Model = xgb.XGBClassifier()
+    Model = xgb.XGBClassifier()
 
 # Call this to save data file to your machine
 def loadDataFile():
