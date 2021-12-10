@@ -4,9 +4,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
+from sklearn.metrics import mean_squared_error
+from math import e
 
 def main():
-    
     # Data reading will go here...
     df = pd.read_csv("datasets/allFinance.csv")
 
@@ -49,6 +50,25 @@ def main():
     
     # Change parameters here
     model = xgb.XGBRegressor()
+    trees = [10, 100, 300, 375, 500]
+
+    valError = pd.DataFrame([], columns = ["trees", "error"])
+
+    for tree in trees:
+        model = xgb.XGBRegressor(n_estimators = tree)
+        model.fit(trainingSet, trainingLabels)
+        pred = model.predict(validationSet)
+        mse = mean_squared_error(validationLabels, pred)
+        mse = 1/(1+mse^(-2))
+        row = {"trees" : tree, "error" : np.sqrt(mse)}
+        
+        valError = valError.append(row, ignore_index=True)
+
+        print(tree)
+
+    ax = valError.plot(x = "trees", y = "error", kind = "line", color = "red",
+                        title = "Root Mean Squared Error With Varying Number of Trees", ylabel = "Root Mean Squared Error", xlabel = "Number of Trees")
+    plt.show()
 
 def normalizeData(data):
     data = (data / 255)
@@ -58,8 +78,6 @@ def normalizeData(data):
     data -= train_mean
     data /= train_std
     return data
-
-    
 
 
 if __name__ == "__main__":
