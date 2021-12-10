@@ -77,7 +77,6 @@ def main():
     plt.show()
 
 def normalizeData(data):
-    data = (data / 255)
     train_mean = data.mean(axis = 0)
     train_std = data.std(axis = 0)
     train_std[train_std == 0] = 1
