@@ -42,39 +42,38 @@ def main():
     for font in fontNames:
         temp = df[df['font']==font]
         temp = temp.head(200)
+        temp = temp.drop(['font', 'Unnamed: 0'], axis=1)
         temp = np.array(temp)
         trainingSet.extend(temp)
 
     for font in fontNames:
         temp = df[df['font']==font]
         temp = temp.iloc[201:266]
+        temp = temp.drop(['font', 'Unnamed: 0'], axis=1)
         temp = np.array(temp)
         validationSet.extend(temp)
 
     for font in fontNames:
         temp = df[df['font']==font]
         temp = temp.iloc[267:307]
+        temp = temp.drop(['font', 'Unnamed: 0'], axis=1)
         temp = np.array(temp)
         testingSet.extend(temp)
 
     for i in range(153):
-        temp = [0] * 200
+        temp = [i] * 200
         temp = np.array(temp)
         trainingLabels.extend(temp)
 
     for i in range(153):
-        temp = [0] * 65
+        temp = [i] * 65
         temp = np.array(temp)
         validationLabels.extend(temp)
 
     for i in range(153):
-        temp = [0] * 40
+        temp = [i] * 40
         temp = np.array(temp)
         testingLabels.extend(temp)
-
-    print(np.shape(trainingLabels))
-    print(np.shape(validationLabels))
-    print(np.shape(testingLabels))
 
     trainingSet = np.array(trainingSet)
     #print(type(trainingSet))
@@ -88,18 +87,32 @@ def main():
     #print(type(testingSet))
     #print(np.shape(testingSet))
 
-    le = preprocessing.LabelEncoder()
-    le.fit(labels)
-    labels = le.transform(labels)
-
-    df.drop(['font'], axis=1)
-
     #print(np.shape(df))
 
     #print(labels)
 
     # Change parameters here
-    Model = xgb.XGBClassifier()
+        
+    minTrees = 100
+    maxTrees = 1000
+
+    trees = list(range(minTrees, maxTrees, 100))
+
+    valError = pd.DataFrame([], columns = ["trees", "error"])
+
+    for tree in trees:
+        model = xgb.XGBClassifier(n_estimators = tree, use_label_encoder=False)
+        model.fit(trainingSet, trainingLabels)
+
+        row = {"trees" : tree, "error" : 1 - model.score(validationSet, validationLabels)}
+
+        valError = valError.append(row, ignore_index=True)
+
+        print(tree)
+
+    ax = valError.plot(x = "trees", y = "error", kind = "line", color = "red", label = "Pixel Features",
+                        title = "Validation Error With Varying Number of Trees", ylabel = "Validation Error", xlabel = "Number of Trees")
+    plt.show()
 
 # Call this to save data file to your machine
 def loadDataFile():
