@@ -45,10 +45,18 @@ def main():
     test_labels = test_labels[7000:10000]
 
     lenet_test = lenet_test[7000:10000]
-    lenet_test_lables = lenet_test_labels[7000:10000]
+    lenet_test_labels = lenet_test_labels[7000:10000]
 
     minTrees = 100
     maxTrees = 1000
+
+    model = HistGradientBoostingClassifier(max_iter = 700, learning_rate=0.01, l2_regularization=0.01).fit(data, label)
+    lenetModel = HistGradientBoostingClassifier(max_iter = 700, learning_rate=0.01, l2_regularization=0.01).fit(lenet, lenet_labels)
+
+    print(1 - model.score(test, test_labels))
+    print(1 - lenetModel.score(lenet_test, lenet_test_labels))
+
+    quit()
 
     trees = list(range(minTrees, maxTrees, 100))
 
