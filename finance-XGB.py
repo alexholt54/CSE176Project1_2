@@ -31,17 +31,23 @@ def main():
 
     trainingSet = temp
 
+    trainingSet = normalizeData(trainingSet)
+
     temp = df.iloc[10000:16000]
     temp = np.array(temp) 
     print(np.shape(temp))
 
     validationSet = temp
 
+    validationSet = normalizeData(validationSet)
+
     temp = df.iloc[16000:21000]
     temp = np.array(temp)
     print(np.shape(temp))   
 
     testingSet = temp
+
+    testingSet = normalizeData(testingSet)
 
     #training labels
     trainingLabels = labels[0:10000]
