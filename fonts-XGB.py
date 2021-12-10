@@ -25,10 +25,11 @@ def main():
     print(labels)
 
     le = preprocessing.LabelEncoder()
+    le.fit(labels)
     labels = le.transform(labels)
 
     print(labels)
-    
+
     # Change parameters here
     # Model = xgb.XGBClassifier()
 
