@@ -4,6 +4,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from xgboost.sklearn import XGBClassifier
 
 def main():
 
@@ -17,200 +20,238 @@ def main():
     label = mnist["train_gnd"]
     label = label.flatten()
 
-    image1s = data[label == 1]
-    image2s = data[label == 2]
-    image3s = data[label == 3]
-    image4s = data[label == 4]
-    image5s = data[label == 5]
-    image6s = data[label == 6]
-    image7s = data[label == 7]
-    image8s = data[label == 8]
-    image9s = data[label == 9]
-    image10s = data[label == 10]
-
-    numImages = 3000
-
-    train = np.concatenate((image1s[0:numImages], image2s[0:numImages], image3s[0:numImages], image4s[0:numImages], image5s[0:numImages], image6s[0:numImages], image7s[0:numImages],
-                            image8s[0:numImages], image9s[0:numImages], image10s[0:numImages]))
-
-    train_label = np.concatenate(([0] * numImages, [1] * numImages, [2] * numImages, [3] * numImages, [4] * numImages, [5] * numImages, [6] * numImages, [7] * numImages, [8] * numImages,
-                                    [9] * numImages))
-
+    # Extract LeNet5 Training set
     lenet = mnistLeNet5["train_fea"]
     lenet = normalizeData(lenet)
     lenet_labels = mnistLeNet5["train_gnd"]
     lenet_labels = lenet_labels.flatten()
 
-    image1s = lenet[lenet_labels == 1]
-    image2s = lenet[lenet_labels == 2]
-    image3s = lenet[lenet_labels == 3]
-    image4s = lenet[lenet_labels == 4]
-    image5s = lenet[lenet_labels == 5]
-    image6s = lenet[lenet_labels == 6]
-    image7s = lenet[lenet_labels == 7]
-    image8s = lenet[lenet_labels == 8]
-    image9s = lenet[lenet_labels == 9]
-    image10s = lenet[lenet_labels == 10]
-
-    lenet = np.concatenate((image1s[0:numImages], image2s[0:numImages], image3s[0:numImages], image4s[0:numImages], image5s[0:numImages], image6s[0:numImages], image7s[0:numImages],
-                            image8s[0:numImages], image9s[0:numImages], image10s[0:numImages]))
-
-    lenet_labels = np.concatenate(([0] * numImages, [1] * numImages, [2] * numImages, [3] * numImages, [4] * numImages, [5] * numImages, [6] * numImages, [7] * numImages, [8] * numImages,
-                                    [9] * numImages))
-
-    # Extract Training and Validation Set
+    # Extract Testing set
     test = mnist["test_fea"]
     test = normalizeData(test)
     test_labels = mnist["test_gnd"]
     test_labels = test_labels.flatten()
 
-    for i in range(1, 11):
-        test_labels[test_labels == i] = i - 1
-
+    # Extract LeNet5 Testing set
     lenet_test = mnistLeNet5["test_fea"]
     lenet_test = normalizeData(lenet_test)
     lenet_test_labels = mnistLeNet5["test_gnd"]
     lenet_test_labels = lenet_test_labels.flatten()
 
-    for i in range(1, 11):
+    # Remap labels to range 0 to 9
+    for i in range(1,11):
+        label[label == i] = i - 1
+        lenet_labels[lenet_labels == i] = i - 1
+        test_labels[test_labels == i] = i - 1
         lenet_test_labels[lenet_test_labels == i] = i - 1
 
-    # Extract 6000 images for validation
-    validation = test[0:6000]
-    validation_labels = test_labels[0:6000]
+    # Split training into training and validation
+    x_train, x_valid, y_train, y_valid = train_test_split(data, label, test_size=0.2, random_state=0)
 
-    lenet_validation = lenet_test[0:6000]
-    lenet_validation_labels = lenet_test_labels[0:6000]
+    x_train_lenet, x_valid_lenet, y_train_lenet, y_valid_lenet = train_test_split(lenet, lenet_labels, test_size=0.2, random_state=0)
 
-    # Extract 4000 images for testing
-    test = test[6000:10000]
-    test_labels = test_labels[6000:10000]
+    # Convert data into DMatrix
+    train = xgb.DMatrix(data = x_train, label = y_train)
+    valid = xgb.DMatrix(data = x_valid, label = y_valid)
 
-    lenet_test = lenet_test[6000:10000]
-    lenet_test_labels = lenet_test_labels[6000:10000]
+    train_lenet = xgb.DMatrix(data = x_train_lenet, label = y_train_lenet)
+    valid_lenet = xgb.DMatrix(data = x_valid_lenet, label = y_valid_lenet)
 
-    # For MNIST:
-    # train, train_label
-    # validation, validation_labels
-    # test, test_lables
+    rates = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7]
 
-    # For MNIST LeNet5
-    # lenet, lenet_labels
-    # lenet_validation, lenet_validation_labels
-    # lenet_test, lenet_test_labels
+    valError = pd.DataFrame([], columns = ["rate", "error"])
+    valErrorLenet = pd.DataFrame([], columns = ["rate", "error"])
+    valErrorTrain = pd.DataFrame([], columns = ["rate", "error"])
+    valErrorLenetTrain = pd.DataFrame([], columns = ["rate", "error"])
 
-    model = xgb.XGBClassifier(n_estimators = 600, learning_rate = 0.01, use_label_encoder=False)
-    model.fit(lenet, lenet_labels)
-
-    print(1 - model.score(lenet_test, lenet_test_labels))
-    quit()
-
-    minTrees = 100
-    maxTrees = 1000
-
-    trees = list(range(minTrees, maxTrees, 100))
-
-    valError = pd.DataFrame([], columns = ["trees", "error"])
-    valErrorLenet = pd.DataFrame([], columns = ["trees", "error"])
-
-    for tree in trees:
-        # Change parameters here
-        model = xgb.XGBClassifier(n_estimators = tree, use_label_encoder=False)
-        model.fit(train, train_label)
-        lenetModel = xgb.XGBClassifier(n_estimators = tree, use_label_encoder=False)
-        lenetModel.fit(lenet, lenet_labels)
-
-        row = {"trees" : tree, "error" : 1 - model.score(validation, validation_labels)}
-        lenet_row = {"trees" : tree, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
-
-        valError = valError.append(row, ignore_index=True)
-        valErrorLenet = valErrorLenet.append(lenet_row, ignore_index=True)
-
-        print(tree)
-
-    ax = valError.plot(x = "trees", y = "error", kind = "line", color = "red", label = "Pixel Features")
-    valErrorLenet.plot(x = "trees", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
-                        title = "Validation Error With Varying Number of Trees", ylabel = "Validation Error", xlabel = "Number of Trees")
-
-    minLearn = 0.1
-    maxLearn = 1
-
-    valError = pd.DataFrame([], columns = ["eta", "error"])
-    valErrorLenet = pd.DataFrame([], columns = ["eta", "error"])
-
-    # For MNIST:
-    # data, label
-    # validation, validation_labels
-    # test, test_lables
-
-    # For MNIST LeNet5
-    # lenet, lenet_labels
-    # lenet_validation, lenet_validation_labels
-    # lenet_test, lenet_test_labels
-
-    rates = np.arange(0.1, 1.1, 0.1)
     for rate in rates:
-        model = xgb.XGBClassifier(learning_rate = rate).fit(data, label)
-        lenetModel = xgb.XGBClassifier(learning_rate = rate).fit(lenet, lenet_labels)
+        params = {
+            "learning_rate" : rate,
+        }
 
-        row = {"eta" : rate, "error" : 1 - model.score(validation, validation_labels)}
-        lenet_row = {"eta" : rate, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
+        model = xgb.train(params, train)
+        lenet_model = xgb.train(params, train_lenet)
 
-        valError = valError.append(row, ignore_index=True)
-        valErrorLenet = valErrorLenet.append(lenet_row, ignore_index=True)
 
-        print(rate)
-    ax = valError.plot(x = "eta", y = "error", kind = "line", color = "red", label = "Pixel Features")
-    valErrorLenet.plot(x = "eta", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
-                        title = "Validation Error With Varying Learning Rates", ylabel = "Validation Error", xlabel = "Learning Rates")
+        y_preds_train = model.predict(train)
+        y_preds = model.predict(valid)
+
+        y_lenet_preds = lenet_model.predict(valid_lenet)
+        y_lenet_train_preds = lenet_model.predict(train_lenet)
+
+        preds = [round(value) for value in y_preds]
+        lenet_preds = [round(value) for value in y_lenet_preds]
+        preds_train = [round(value) for value in y_preds_train]
+        lenet_train_preds = [round(value) for value in y_lenet_train_preds]
+
+        error = 1 - accuracy_score(y_valid, preds)
+        train_error = 1 - accuracy_score(y_train, preds_train)
+        lenet_error = 1 - accuracy_score(y_valid_lenet, lenet_preds)
+        train_lenet_error = 1 - accuracy_score(y_train_lenet, lenet_train_preds)
+
+        row1 = {"rate" : rate, "error" : error}
+        row2 = {"rate" : rate, "error" : lenet_error}
+        row3 = {"rate" : rate, "error" : train_error}
+        row4 = {"rate" : rate, "error" : train_lenet_error}
+
+        valError = valError.append(row1, ignore_index=True)
+        valErrorLenet = valErrorLenet.append(row2, ignore_index=True)
+        valErrorTrain = valErrorTrain.append(row3, ignore_index=True)
+        valErrorLenetTrain = valErrorLenetTrain.append(row4, ignore_index=True)
+
+    ax = valError.plot(x = "rate", y = "error", kind = "line", color = "red", label = "Pixel Features (Validation)")
+    ax2 = valErrorTrain.plot(x = "rate", y = "error", ax = ax, kind = "line", color = "green", label = "Pixel Features (Training)")
+    ax3 = valErrorLenetTrain.plot(x = "rate", y = "error", ax = ax2, kind = "line", color = "black", label = "LeNet5 Features (Training)")
+    valErrorLenet.plot(x = "rate", y = "error", kind = "line", ax = ax3, color = "blue", label = "LeNet5 Features (Validation)",
+                        title = "Error With Varying Learning Rates (MNIST)", ylabel = "Error", xlabel = "Learning Rate")
+
     plt.show()
 
-    minDepth = 0
-    depth = 1000
+    depths = [1, 5, 10, 20, 30, 40, 50, 100, 500, 1000]
 
     valError = pd.DataFrame([], columns = ["depth", "error"])
     valErrorLenet = pd.DataFrame([], columns = ["depth", "error"])
-
-    depths = list(range(minDepth, depth, 100))
+    valErrorTrain = pd.DataFrame([], columns = ["depth", "error"])
+    valErrorLenetTrain = pd.DataFrame([], columns = ["depth", "error"])
 
     for depth in depths:
-        model = xgb.XGBClassifier(max_depth = depth).fit(data, label)
-        lenetModel = xgb.XGBClassifier(max_depth = depth).fit(lenet, lenet_labels)
+        params = {
+            "learning_rate" : 0.3,
+            "max_depth" : depth
+        }
 
-        row = {"depth" : depth, "error" : 1 - model.score(validation, validation_labels)}
-        lenet_row = {"depth" : depth, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
+        model = xgb.train(params, train)
+        lenet_model = xgb.train(params, train_lenet)
 
-        valError = valError.append(row, ignore_index=True)
-        valErrorLenet = valErrorLenet.append(lenet_row, ignore_index=True)
 
-        print(depth)
-    ax = valError.plot(x = "depth", y = "error", kind = "line", color = "red", label = "Pixel Features")
-    valErrorLenet.plot(x = "depth", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
-                        title = "Validation Error With Varying Max Depth Values", ylabel = "Validation Error", xlabel = "Max Depth Values")
+        y_preds_train = model.predict(train)
+        y_preds = model.predict(valid)
+
+        y_lenet_preds = lenet_model.predict(valid_lenet)
+        y_lenet_train_preds = lenet_model.predict(train_lenet)
+
+        preds = [round(value) for value in y_preds]
+        lenet_preds = [round(value) for value in y_lenet_preds]
+        preds_train = [round(value) for value in y_preds_train]
+        lenet_train_preds = [round(value) for value in y_lenet_train_preds]
+
+        error = 1 - accuracy_score(y_valid, preds)
+        train_error = 1 - accuracy_score(y_train, preds_train)
+        lenet_error = 1 - accuracy_score(y_valid_lenet, lenet_preds)
+        train_lenet_error = 1 - accuracy_score(y_train_lenet, lenet_train_preds)
+
+        row1 = {"depth" : depth, "error" : error}
+        row2 = {"depth" : depth, "error" : lenet_error}
+        row3 = {"depth" : depth, "error" : train_error}
+        row4 = {"depth" : depth, "error" : train_lenet_error}
+
+        valError = valError.append(row1, ignore_index=True)
+        valErrorLenet = valErrorLenet.append(row2, ignore_index=True)
+        valErrorTrain = valErrorTrain.append(row3, ignore_index=True)
+        valErrorLenetTrain = valErrorLenetTrain.append(row4, ignore_index=True)
+
+    ax = valError.plot(x = "depth", y = "error", kind = "line", color = "red", label = "Pixel Features (Validation)")
+    ax2 = valErrorTrain.plot(x = "depth", y = "error", ax = ax, kind = "line", color = "green", label = "Pixel Features (Training)")
+    ax3 = valErrorLenetTrain.plot(x = "depth", y = "error", ax = ax2, kind = "line", color = "black", label = "LeNet5 Features (Training)")
+    valErrorLenet.plot(x = "depth", y = "error", kind = "line", ax = ax3, color = "blue", label = "LeNet5 Features (Validation)",
+                        title = "Error With Varying Max Depth Values (MNIST)", ylabel = "Error", xlabel = "Max Depth Values")
+
     plt.show()
     
-    minL2 = 0
-    maxL2 = 0.1
+    gammas = [0, 10, 25, 50, 75, 150, 250, 500, 850, 1000, 2000]
 
-    L2s = np.arange(0.0, 1.1, 0.1)
+    valError = pd.DataFrame([], columns = ["rate", "error"])
+    valErrorLenet = pd.DataFrame([], columns = ["rate", "error"])
+    valErrorTrain = pd.DataFrame([], columns = ["rate", "error"])
+    valErrorLenetTrain = pd.DataFrame([], columns = ["rate", "error"])
 
-    valError = pd.DataFrame([], columns = ["l2", "error"])
-    valErrorLenet = pd.DataFrame([], columns = ["l2", "error"])
+    for gamma in gammas:
+        params = {
+            "min_split_loss" : gamma
+        }
 
-    for l2 in L2s:
-        model = xgb.XGBClassifier(l2_regularization=l2).fit(data, label)
-        lenetModel = xgb.XGBClassifier(l2_regularization=l2).fit(lenet, lenet_labels)
+        model = xgb.train(params, train)
+        lenet_model = xgb.train(params, train_lenet)
 
-        row = {"l2" : l2, "error" : 1 - model.score(validation, validation_labels)}
-        lenet_row = {"l2" : l2, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
 
-        valError = valError.append(row, ignore_index=True)
-        valErrorLenet = valErrorLenet.append(lenet_row, ignore_index=True)
+        y_preds_train = model.predict(train)
+        y_preds = model.predict(valid)
 
-        print(depth)
-    ax = valError.plot(x = "l2", y = "error", kind = "line", color = "red", label = "Pixel Features")
-    valErrorLenet.plot(x = "l2", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
-                        title = "Validation Error With Varying L2 Regularization", ylabel = "Validation Error", xlabel = "L2 Regularization Values")
+        y_lenet_preds = lenet_model.predict(valid_lenet)
+        y_lenet_train_preds = lenet_model.predict(train_lenet)
+
+        preds = [round(value) for value in y_preds]
+        lenet_preds = [round(value) for value in y_lenet_preds]
+        preds_train = [round(value) for value in y_preds_train]
+        lenet_train_preds = [round(value) for value in y_lenet_train_preds]
+
+        error = 1 - accuracy_score(y_valid, preds)
+        train_error = 1 - accuracy_score(y_train, preds_train)
+        lenet_error = 1 - accuracy_score(y_valid_lenet, lenet_preds)
+        train_lenet_error = 1 - accuracy_score(y_train_lenet, lenet_train_preds)
+
+        row1 = {"gamma" : gamma, "error" : error}
+        row2 = {"gamma" : gamma, "error" : lenet_error}
+        row3 = {"gamma" : gamma, "error" : train_error}
+        row4 = {"gamma" : gamma, "error" : train_lenet_error}
+
+        valError = valError.append(row1, ignore_index=True)
+        valErrorLenet = valErrorLenet.append(row2, ignore_index=True)
+        valErrorTrain = valErrorTrain.append(row3, ignore_index=True)
+        valErrorLenetTrain = valErrorLenetTrain.append(row4, ignore_index=True)
+
+    ax = valError.plot(x = "gamma", y = "error", kind = "line", color = "red", label = "Pixel Features (Validation)")
+    ax2 = valErrorTrain.plot(x = "gamma", y = "error", ax = ax, kind = "line", color = "green", label = "Pixel Features (Training)")
+    ax3 = valErrorLenetTrain.plot(x = "gamma", y = "error", ax = ax2, kind = "line", color = "black", label = "LeNet5 Features (Training)")
+    valErrorLenet.plot(x = "gamma", y = "error", kind = "line", ax = ax3, color = "blue", label = "LeNet5 Features (Validation)",
+                        title = "Error With Varying Gamma Values (MNIST)", ylabel = "Error", xlabel = "Gamma Values")
+
+    plt.show()
+
+    trees = [1, 100, 200, 500, 1000]
+
+    valError = pd.DataFrame([], columns = ["tree", "error"])
+    valErrorLenet = pd.DataFrame([], columns = ["tree", "error"])
+    valErrorTrain = pd.DataFrame([], columns = ["tree", "error"])
+    valErrorLenetTrain = pd.DataFrame([], columns = ["tree", "error"])
+
+    for tree in trees:
+        model = XGBClassifier(n_estimators = tree)
+        lenet_model = XGBClassifier(n_estimators = tree)
+        model.fit(x_train, y_train)
+        lenet_model.fit(x_train_lenet, y_train_lenet)
+
+        y_preds_train = model.predict(x_train)
+        y_preds = model.predict(x_valid)
+        y_lenet_preds = lenet_model.predict(x_valid_lenet)
+        y_lenet_train_preds = lenet_model.predict(x_train_lenet)
+
+        preds = [round(value) for value in y_preds]
+        lenet_preds = [round(value) for value in y_lenet_preds]
+        preds_train = [round(value) for value in y_preds_train]
+        lenet_train_preds = [round(value) for value in y_lenet_train_preds]
+
+        error = 1 - accuracy_score(y_valid, preds)
+        train_error = 1 - accuracy_score(y_train, preds_train)
+        lenet_error = 1 - accuracy_score(y_valid_lenet, lenet_preds)
+        train_lenet_error = 1 - accuracy_score(y_train_lenet, lenet_train_preds)
+
+        row1 = {"tree" : tree, "error" : error}
+        row2 = {"tree" : tree, "error" : lenet_error}
+        row3 = {"tree" : tree, "error" : train_error}
+        row4 = {"tree" : tree, "error" : train_lenet_error}
+
+        valError = valError.append(row1, ignore_index=True)
+        valErrorLenet = valErrorLenet.append(row2, ignore_index=True)
+        valErrorTrain = valErrorTrain.append(row3, ignore_index=True)
+        valErrorLenetTrain = valErrorLenetTrain.append(row4, ignore_index=True)
+
+    ax = valError.plot(x = "tree", y = "error", kind = "line", color = "red", label = "Pixel Features (Validation)")
+    ax2 = valErrorTrain.plot(x = "tree", y = "error", ax = ax, kind = "line", color = "green", label = "Pixel Features (Training)")
+    ax3 = valErrorLenetTrain.plot(x = "tree", y = "error", ax = ax2, kind = "line", color = "black", label = "LeNet5 Features (Training)")
+    valErrorLenet.plot(x = "tree", y = "error", kind = "line", ax = ax3, color = "blue", label = "LeNet5 Features (Validation)",
+                        title = "Error With Varying Number of Trees (MNIST)", ylabel = "Error", xlabel = "Number of Trees")
+
     plt.show()
 
 def normalizeData(data):
