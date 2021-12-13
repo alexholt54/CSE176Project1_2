@@ -84,7 +84,7 @@ def main():
                         title = "XGB Error With Varying Learning Rates (Fonts)", ylabel = "Error", xlabel = "Learning Rate")
     plt.show()"""
 
-    trees = [1, 10, 250, 500, 1000]
+    """     trees = [1, 10, 250, 500, 1000]
 
     valError = pd.DataFrame([], columns = ["tree", "error"])
     valErrorTrain = pd.DataFrame([], columns = ["tree", "error"])
@@ -116,6 +116,40 @@ def main():
     ax = valError.plot(x = "tree", y = "error", kind = "line", color = "red", label = "Validation")
     valErrorTrain.plot(x = "tree", y = "error", kind = "line", ax = ax, color = "blue", label = "Training",
                         title = "XGB Error With Varying Number of Trees (Fonts)", ylabel = "Error", xlabel = "Number of Trees")
+    plt.show() """
+
+    depths = [1, 10, 250, 500]
+
+    valError = pd.DataFrame([], columns = ["depths", "error"])
+    valErrorTrain = pd.DataFrame([], columns = ["depths", "error"])
+
+    for depth in depths:
+        model = XGBClassifier(n_estimators = 500, learning_rate = 0.01, max_depth = depth, use_label_encoder=False)
+        model.fit(x_train, y_train)
+
+        y_preds_train = model.predict(x_train)
+        y_preds = model.predict(x_valid)
+
+        numCorrect = 0
+        for i in range(len(y_train)):
+            if y_train[i] == y_preds_train[i]:
+                numCorrect += 1
+        train_error = 1 - (numCorrect / len(y_train))
+        numCorrect = 0
+        for i in range(len(y_valid)):
+            if y_valid[i] == y_preds[i]:
+                numCorrect += 1
+        error = 1 - (numCorrect / len(y_valid))
+
+        row1 = {"depths" : depth, "error" : error}
+        row3 = {"depths" : depth, "error" : train_error}
+
+        valError = valError.append(row1, ignore_index=True)
+        valErrorTrain = valErrorTrain.append(row3, ignore_index=True)
+
+    ax = valError.plot(x = "depths", y = "error", kind = "line", color = "red", label = "Validation")
+    valErrorTrain.plot(x = "depths", y = "error", kind = "line", ax = ax, color = "blue", label = "Training",
+                        title = "XGB Error With Varying Number of Max Depths (Fonts)", ylabel = "Error", xlabel = "Number of Depths")
     plt.show()
 
 # Call this to save data file to your machine
