@@ -4,13 +4,10 @@ import xgboost as xgb
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.io import loadmat
-from sklearn import preprocessing
 import os
 import glob
 import csv
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 from xgboost.sklearn import XGBClassifier
 
 def main():
@@ -49,7 +46,11 @@ def main():
 
     x_valid, x_test, y_valid, y_test = train_test_split(x_valid, y_valid, test_size=0.4, random_state=0)
 
-    """rates = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7]
+    y_train = y_train.astype('int')
+    y_valid = y_valid.astype('int')
+    y_test = y_test.astype('int')
+
+    rates = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7]
 
     valError = pd.DataFrame([], columns = ["rate", "error"])
     valErrorTrain = pd.DataFrame([], columns = ["rate", "error"])
@@ -82,9 +83,9 @@ def main():
     ax = valError.plot(x = "rate", y = "error", kind = "line", color = "red", label = "Validation")
     valErrorTrain.plot(x = "rate", y = "error", kind = "line", ax = ax, color = "blue", label = "Training",
                         title = "XGB Error With Varying Learning Rates (Fonts)", ylabel = "Error", xlabel = "Learning Rate")
-    plt.show()"""
+    plt.show()
 
-    """     trees = [1, 10, 250, 500, 1000]
+    trees = [1, 10, 250, 500, 1000]
 
     valError = pd.DataFrame([], columns = ["tree", "error"])
     valErrorTrain = pd.DataFrame([], columns = ["tree", "error"])
@@ -116,7 +117,7 @@ def main():
     ax = valError.plot(x = "tree", y = "error", kind = "line", color = "red", label = "Validation")
     valErrorTrain.plot(x = "tree", y = "error", kind = "line", ax = ax, color = "blue", label = "Training",
                         title = "XGB Error With Varying Number of Trees (Fonts)", ylabel = "Error", xlabel = "Number of Trees")
-    plt.show() """
+    plt.show()
 
     depths = [1, 10, 250, 500]
 
@@ -152,39 +153,10 @@ def main():
                         title = "XGB Error With Varying Number of Max Depths (Fonts)", ylabel = "Error", xlabel = "Number of Depths")
     plt.show()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    # Testing part
+    model = XGBClassifier(learning_rate=0.2, n_estimators=400, max_depth=50)
+    model.fit(x_train, y_train)
+    print(1 - model.score(x_test, y_test))
 
 # Call this to save data file to your machine
 def loadDataFile():
@@ -209,8 +181,6 @@ def normalizeData(data):
     data -= train_mean
     data /= train_std
     return data
-
-
 
 if __name__ == "__main__":
     main()
