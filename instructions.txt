@@ -1,0 +1,8 @@
+Running the Script:
+In order to run the python scripts we provided, the datasets must be downloaded and placed in a folder called “datasets”.
+This is because it is hard coded to read files from this folder. The data used in this project was split into many csv files 
+so we condensed all the data into two separate csv files containing all the data. One csv file is called allFinance.csv for 
+the regression task and allFont.csv for the classification task. In order to obtain these files simply run the loadDataFile() 
+function in fonts-XGB.py and the loadDataFile() function in finance-HGB.py. These will create the two csv files in the current 
+directory and just need to be moved into the “datasets” folder. The libraries needed to run the scripts are numpy, pandas, 
+matplotlib, scipy, xgboost, and scikit-learn.
