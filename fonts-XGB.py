@@ -9,6 +9,9 @@ from sklearn import preprocessing
 import os
 import glob
 import csv
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from xgboost.sklearn import XGBClassifier
 
 def main():
 
@@ -21,77 +24,87 @@ def main():
     #print(np.shape(df))
 
     labels = df["font"].values
+    df = df.drop(['font', 'Unnamed: 0'], axis=1)
+
+    
+    
     labels = labels.flatten()
 
-    #data
-    trainingSet = []
-    validationSet = []
-    testingSet = []
+    for i in range(len(labels)):
+        if labels[i] == 'GOUDY':
+            labels[i] = 0
+        elif labels[i] == 'NIAGARA':
+            labels[i] = 1
+        elif labels[i] == 'ARIAL':
+            labels[i] = 2
+        elif labels[i] == 'CAMBRIA':
+            labels[i] = 3
+        elif labels[i] == 'COMIC':
+            labels[i] = 4
+        elif labels[i] == 'HARLOW':
+            labels[i] = 5
+        elif labels[i] == 'PAPYRUS':
+            labels[i] = 6
+        elif labels[i] == 'ROMAN':
+            labels[i] = 7
+        elif labels[i] == 'TIMES':
+            labels[i] = 8
+        elif labels[i] == 'MODERN':
+            labels[i] = 9
 
-    #labels
-    trainingLabels = []
-    validationLabels = []
-    testingLabels = []
 
-    fontNames = []
+    x_train, x_valid2, y_train, y_valid2 = train_test_split(df, labels, test_size=0.33, random_state=0)
 
-    for label in labels:
-        if label not in fontNames:
-            fontNames.append(label)
+    x_valid, x_test, y_valid, y_test = train_test_split(x_valid2, y_valid2, test_size=0.4, random_state=0)
 
-    for font in fontNames:
-        temp = df[df['font']==font]
-        temp = temp.head(400)
-        temp = temp.drop(['font', 'Unnamed: 0'], axis=1)
-        temp = np.array(temp)
-        trainingSet.extend(temp)
 
-    for font in fontNames:
-        temp = df[df['font']==font]
-        temp = temp.iloc[400:530]
-        temp = temp.drop(['font', 'Unnamed: 0'], axis=1)
-        temp = np.array(temp)
-        validationSet.extend(temp)
+    train = xgb.DMatrix(data = x_train, label = y_train)
+    valid = xgb.DMatrix(data = x_valid, label = y_valid)
 
-    for font in fontNames:
-        temp = df[df['font']==font]
-        temp = temp.iloc[530:610]
-        temp = temp.drop(['font', 'Unnamed: 0'], axis=1)
-        temp = np.array(temp)
-        testingSet.extend(temp)
+    rates = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7]
 
-    for i in range(153):
-        temp = [i] * 400
-        temp = np.array(temp)
-        trainingLabels.extend(temp)
+    valError = pd.DataFrame([], columns = ["rate", "error"])
+    valErrorTrain = pd.DataFrame([], columns = ["rate", "error"])
 
-    for i in range(153):
-        temp = [i] * 130
-        temp = np.array(temp)
-        validationLabels.extend(temp)
+    print(y_train)
 
-    for i in range(153):
-        temp = [i] * 80
-        temp = np.array(temp)
-        testingLabels.extend(temp)
+    for rate in rates:
+        params = {
+            "learning_rate" : rate,
+        }
 
-    trainingSet = np.array(trainingSet)
-    #print(type(trainingSet))
-    #print(np.shape(trainingSet))
+        model = xgb.train(params, train)
 
-    validationSet = np.array(validationSet)
-    #print(type(validationSet))
-    #print(np.shape(validationSet))
 
-    testingSet = np.array(testingSet)
-    #print(type(testingSet))
-    #print(np.shape(testingSet))
 
-    #print(np.shape(df))
+        y_preds_train = model.predict(train)
+        y_preds = model.predict(valid)
 
-    #print(labels)
+        #preds = [round(value) for value in y_preds]
+        #preds_train = [round(value) for value in y_preds_train]
 
-    # Change parameters here
+        print(y_preds)
+        print(y_preds_train)
+        #print(preds)
+        #print(preds_train)
+
+        error = 1 - accuracy_score(y_valid, y_preds)
+        train_error = 1 - accuracy_score(y_train, y_preds_train)
+
+        row1 = {"rate" : rate, "error" : error}
+        row3= {"rate" : rate, "error" : train_error}
+
+        valError = valError.append(row1, ignore_index=True)
+        valErrorTrain = valErrorTrain.append(row3, ignore_index=True)
+
+    ax = valError.plot(x = "rate", y = "error", kind = "line", color = "red", label = "Validation")
+    valErrorTrain.plot(x = "rate", y = "error", kind = "line", ax = ax, color = "blue", label = "Training",
+                        title = "XGB Error With Varying Learning Rates (Fonts)", ylabel = "Error", xlabel = "Learning Rate")
+    plt.show()
+    
+    quit()
+    
+    #Change Paramters here:
         
     minTrees = 100
     maxTrees = 1000
@@ -124,7 +137,7 @@ def loadDataFile():
         df = pd.read_csv(f)
         #print('Location:', f)
         print('File Name:', f.split("\\")[-1])
-        df = df.drop(['orientation', 'm_top', 'm_left', 'originalH', 'originalW', 'h', 'w', 'fontVariant'], axis=1)
+        df = df.drop(['orientation', 'm_top', 'm_left', 'originalH', 'originalW', 'h', 'w', 'fontVariant', 'm_label', 'strength', 'italic'], axis=1)
         mainDF = mainDF.append(df)
 
     mainDF.to_csv('allFont.csv')
