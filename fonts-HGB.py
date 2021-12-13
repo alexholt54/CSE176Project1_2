@@ -85,12 +85,17 @@ def main():
     minTrees = 100
     maxTrees = 1000
 
-    trees = list(range(minTrees, maxTrees, 100))
+    trees = [10, 50, 150, 300, 500, 1000, 2000]
 
     valError = pd.DataFrame([], columns = ["trees", "error"])
 
+    model = HistGradientBoostingClassifier(max_iter = 250, learning_rate=0.1)
+    model.fit(trainingSet, trainingLabels)
+    print(1 - model.score(validationSet, validationLabels))
+    quit()
+
     for tree in trees:
-        model = HistGradientBoostingClassifier(max_iter = tree)
+        model = HistGradientBoostingClassifier(max_iter = tree, learning_rate=0.1)
         model.fit(trainingSet, trainingLabels)
 
         row = {"trees" : tree, "error" : 1 - model.score(validationSet, validationLabels)}

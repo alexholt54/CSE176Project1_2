@@ -253,6 +253,15 @@ def main():
 
     plt.show()
 
+    # Testing
+    model = XGBClassifier(n_estimators = 600, learning_rate=0.3, max_depth=200)
+    lenet_model = XGBClassifier(n_estimators = 600, learning_rate=0.3, max_depth=200)
+    model.fit(x_train, y_train)
+    lenet_model.fit(x_train_lenet, y_train_lenet)
+
+    print(1 - model.score(test, test_labels))
+    print(1 - lenet_model.score(lenet_test, lenet_test_labels))
+
 def normalizeData(data):
     data = (data / 255)
     train_mean = data.mean(axis = 0)

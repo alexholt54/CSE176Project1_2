@@ -4,6 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
 def main():
 
@@ -17,150 +19,201 @@ def main():
     label = mnist["train_gnd"]
     label = label.flatten()
 
+    # Extract LeNet5 Training set
     lenet = mnistLeNet5["train_fea"]
     lenet = normalizeData(lenet)
     lenet_labels = mnistLeNet5["train_gnd"]
     lenet_labels = lenet_labels.flatten()
 
-    # Extract Training and Validation Set
+    # Extract Testing set
     test = mnist["test_fea"]
     test = normalizeData(test)
     test_labels = mnist["test_gnd"]
     test_labels = test_labels.flatten()
 
+    # Extract LeNet5 Testing set
     lenet_test = mnistLeNet5["test_fea"]
     lenet_test = normalizeData(lenet_test)
     lenet_test_labels = mnistLeNet5["test_gnd"]
     lenet_test_labels = lenet_test_labels.flatten()
 
-    # Extract 7000 images for validation
-    validation = test[0:7000]
-    validation_labels = test_labels[0:7000]
+    # Remap labels to range 0 to 9
+    for i in range(1,11):
+        label[label == i] = i - 1
+        lenet_labels[lenet_labels == i] = i - 1
+        test_labels[test_labels == i] = i - 1
+        lenet_test_labels[lenet_test_labels == i] = i - 1
 
-    lenet_validation = lenet_test[0:7000]
-    lenet_validation_labels = lenet_test_labels[0:7000]
+    # Split training into training and validation
+    x_train, x_valid, y_train, y_valid = train_test_split(data, label, test_size=0.2, random_state=0)
 
-    # Extract 3000 images for testing
-    test = test[7000:10000]
-    test_labels = test_labels[7000:10000]
+    x_train_lenet, x_valid_lenet, y_train_lenet, y_valid_lenet = train_test_split(lenet, lenet_labels, test_size=0.2, random_state=0)
 
-    lenet_test = lenet_test[7000:10000]
-    lenet_test_labels = lenet_test_labels[7000:10000]
+    """ trees = [1, 10, 100, 500, 1000]
 
-    minTrees = 100
-    maxTrees = 1000
-
-    model = HistGradientBoostingClassifier(max_iter = 700, learning_rate=0.01, l2_regularization=0.01).fit(data, label)
-    lenetModel = HistGradientBoostingClassifier(max_iter = 700, learning_rate=0.01, l2_regularization=0.01).fit(lenet, lenet_labels)
-
-    print(1 - model.score(test, test_labels))
-    print(1 - lenetModel.score(lenet_test, lenet_test_labels))
-
-    quit()
-
-    trees = list(range(minTrees, maxTrees, 100))
-
-    valError = pd.DataFrame([], columns = ["trees", "error"])
-    valErrorLenet = pd.DataFrame([], columns = ["trees", "error"])
+    valError = pd.DataFrame([], columns = ["tree", "error"])
+    valErrorLenet = pd.DataFrame([], columns = ["tree", "error"])
+    valErrorTrain = pd.DataFrame([], columns = ["tree", "error"])
+    valErrorLenetTrain = pd.DataFrame([], columns = ["tree", "error"])
 
     for tree in trees:
-        model = HistGradientBoostingClassifier(max_iter = tree).fit(data, label)
-        lenetModel = HistGradientBoostingClassifier(max_iter = tree).fit(lenet, lenet_labels)
+        model = HistGradientBoostingClassifier(max_iter=tree)
+        lenet_model = HistGradientBoostingClassifier(max_iter=tree)
+        model.fit(x_train, y_train)
+        lenet_model.fit(x_train_lenet, y_train_lenet)
 
-        row = {"trees" : tree, "error" : 1 - model.score(validation, validation_labels)}
-        lenet_row = {"trees" : tree, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
+        y_preds_train = model.predict(x_train)
+        y_preds = model.predict(x_valid)
 
-        valError = valError.append(row, ignore_index=True)
-        valErrorLenet = valErrorLenet.append(lenet_row, ignore_index=True)
+        y_lenet_preds = lenet_model.predict(x_valid_lenet)
+        y_lenet_train_preds = lenet_model.predict(x_train_lenet)
+
+        preds = [round(value) for value in y_preds]
+        lenet_preds = [round(value) for value in y_lenet_preds]
+        preds_train = [round(value) for value in y_preds_train]
+        lenet_train_preds = [round(value) for value in y_lenet_train_preds]
+
+        error = 1 - accuracy_score(y_valid, preds)
+        train_error = 1 - accuracy_score(y_train, preds_train)
+        lenet_error = 1 - accuracy_score(y_valid_lenet, lenet_preds)
+        train_lenet_error = 1 - accuracy_score(y_train_lenet, lenet_train_preds)
+
+        row1 = {"tree" : tree, "error" : error}
+        row2 = {"tree" : tree, "error" : lenet_error}
+        row3 = {"tree" : tree, "error" : train_error}
+        row4 = {"tree" : tree, "error" : train_lenet_error}
+
+        valError = valError.append(row1, ignore_index=True)
+        valErrorLenet = valErrorLenet.append(row2, ignore_index=True)
+        valErrorTrain = valErrorTrain.append(row3, ignore_index=True)
+        valErrorLenetTrain = valErrorLenetTrain.append(row4, ignore_index=True)
 
         print(tree)
 
-    ax = valError.plot(x = "trees", y = "error", kind = "line", color = "red", label = "Pixel Features")
-    valErrorLenet.plot(x = "trees", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
-                        title = "Validation Error With Varying Number of Trees", ylabel = "Validation Error", xlabel = "Number of Trees")
-    plt.show()
+    ax = valError.plot(x = "tree", y = "error", kind = "line", color = "red", label = "Pixel Features (Validation)")
+    ax2 = valErrorTrain.plot(x = "tree", y = "error", ax = ax, kind = "line", color = "green", label = "Pixel Features (Training)")
+    ax3 = valErrorLenetTrain.plot(x = "tree", y = "error", ax = ax2, kind = "line", color = "black", label = "LeNet5 Features (Training)")
+    valErrorLenet.plot(x = "tree", y = "error", kind = "line", ax = ax3, color = "blue", label = "LeNet5 Features (Validation)",
+                        title = "Error With Varying Number of Trees (MNIST)", ylabel = "Error", xlabel = "Number of Trees")
+    plt.show() """
 
-    # For MNIST:
-    # data, label
-    # validation, validation_labels
-    # test, test_lables
+    """ rates = [0.01, 0.05, 0.07, 0.1, 0.3]
 
-    # For MNIST LeNet5
-    # lenet, lenet_labels
-    # lenet_validation, lenet_validation_labels
-    # lenet_test, lenet_test_labels
+    valError = pd.DataFrame([], columns = ["rate", "error"])
+    valErrorLenet = pd.DataFrame([], columns = ["rate", "error"])
+    valErrorTrain = pd.DataFrame([], columns = ["rate", "error"])
+    valErrorLenetTrain = pd.DataFrame([], columns = ["rate", "error"])
 
-    minLearn = 0.1
-    maxLearn = 1.1
-
-    valError = pd.DataFrame([], columns = ["eta", "error"])
-    valErrorLenet = pd.DataFrame([], columns = ["eta", "error"])
-
-    rates = np.arange(minLearn, maxLearn, 0.1)
     for rate in rates:
-        model = HistGradientBoostingClassifier(learning_rate = rate).fit(data, label)
-        lenetModel = HistGradientBoostingClassifier(learning_rate = rate).fit(lenet, lenet_labels)
+        model = HistGradientBoostingClassifier(learning_rate=rate, max_iter=300)
+        lenet_model = HistGradientBoostingClassifier(learning_rate=rate, max_iter=300)
+        print("training model")
+        model.fit(x_train, y_train)
+        print("training lenet model")
+        lenet_model.fit(x_train_lenet, y_train_lenet)
 
-        row = {"eta" : rate, "error" : 1 - model.score(validation, validation_labels)}
-        lenet_row = {"eta" : rate, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
+        y_preds_train = model.predict(x_train)
+        y_preds = model.predict(x_valid)
 
-        valError = valError.append(row, ignore_index=True)
-        valErrorLenet = valErrorLenet.append(lenet_row, ignore_index=True)
+        y_lenet_preds = lenet_model.predict(x_valid_lenet)
+        y_lenet_train_preds = lenet_model.predict(x_train_lenet)
+
+        preds = [round(value) for value in y_preds]
+        lenet_preds = [round(value) for value in y_lenet_preds]
+        preds_train = [round(value) for value in y_preds_train]
+        lenet_train_preds = [round(value) for value in y_lenet_train_preds]
+
+        error = 1 - accuracy_score(y_valid, preds)
+        train_error = 1 - accuracy_score(y_train, preds_train)
+        lenet_error = 1 - accuracy_score(y_valid_lenet, lenet_preds)
+        train_lenet_error = 1 - accuracy_score(y_train_lenet, lenet_train_preds)
+
+        row1 = {"rate" : rate, "error" : error}
+        row2 = {"rate" : rate, "error" : lenet_error}
+        row3 = {"rate" : rate, "error" : train_error}
+        row4 = {"rate" : rate, "error" : train_lenet_error}
+
+        valError = valError.append(row1, ignore_index=True)
+        valErrorLenet = valErrorLenet.append(row2, ignore_index=True)
+        valErrorTrain = valErrorTrain.append(row3, ignore_index=True)
+        valErrorLenetTrain = valErrorLenetTrain.append(row4, ignore_index=True)
 
         print(rate)
-    ax = valError.plot(x = "eta", y = "error", kind = "line", color = "red", label = "Pixel Features")
-    valErrorLenet.plot(x = "eta", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
-                        title = "Validation Error With Varying Learning Rates", ylabel = "Validation Error", xlabel = "Learning Rates")
-    plt.show()
 
-    minDepth = 10
-    depth = 100
+    ax = valError.plot(x = "rate", y = "error", kind = "line", color = "red", label = "Pixel Features (Validation)")
+    ax2 = valErrorTrain.plot(x = "rate", y = "error", ax = ax, kind = "line", color = "green", label = "Pixel Features (Training)")
+    ax3 = valErrorLenetTrain.plot(x = "rate", y = "error", ax = ax2, kind = "line", color = "black", label = "LeNet5 Features (Training)")
+    valErrorLenet.plot(x = "rate", y = "error", kind = "line", ax = ax3, color = "blue", label = "LeNet5 Features (Validation)",
+                        title = "HGB Error With Varying Learning Rates (MNIST)", ylabel = "Error", xlabel = "Learning Rate Values")
+    plt.show() """
+
+    """depths = [1, 10, 100, 500, 1000]
 
     valError = pd.DataFrame([], columns = ["depth", "error"])
     valErrorLenet = pd.DataFrame([], columns = ["depth", "error"])
-
-    depths = list(range(minDepth, depth, 10))
+    valErrorTrain = pd.DataFrame([], columns = ["depth", "error"])
+    valErrorLenetTrain = pd.DataFrame([], columns = ["depth", "error"])
 
     for depth in depths:
-        model = HistGradientBoostingClassifier(max_depth = depth).fit(data, label)
-        lenetModel = HistGradientBoostingClassifier(max_depth = depth).fit(lenet, lenet_labels)
+        model = HistGradientBoostingClassifier(learning_rate=0.05, max_iter=300, max_depth=depth)
+        lenet_model = HistGradientBoostingClassifier(learning_rate=0.05, max_iter=300, max_depth=depth)
+        model.fit(x_train, y_train)
+        lenet_model.fit(x_train_lenet, y_train_lenet)
 
-        row = {"depth" : depth, "error" : 1 - model.score(validation, validation_labels)}
-        lenet_row = {"depth" : depth, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
+        y_preds_train = model.predict(x_train)
+        y_preds = model.predict(x_valid)
 
-        valError = valError.append(row, ignore_index=True)
-        valErrorLenet = valErrorLenet.append(lenet_row, ignore_index=True)
+        y_lenet_preds = lenet_model.predict(x_valid_lenet)
+        y_lenet_train_preds = lenet_model.predict(x_train_lenet)
+
+        preds = [round(value) for value in y_preds]
+        lenet_preds = [round(value) for value in y_lenet_preds]
+        preds_train = [round(value) for value in y_preds_train]
+        lenet_train_preds = [round(value) for value in y_lenet_train_preds]
+
+        error = 1 - accuracy_score(y_valid, preds)
+        train_error = 1 - accuracy_score(y_train, preds_train)
+        lenet_error = 1 - accuracy_score(y_valid_lenet, lenet_preds)
+        train_lenet_error = 1 - accuracy_score(y_train_lenet, lenet_train_preds)
+
+        row1 = {"depth" : depth, "error" : error}
+        row2 = {"depth" : depth, "error" : lenet_error}
+        row3 = {"depth" : depth, "error" : train_error}
+        row4 = {"depth" : depth, "error" : train_lenet_error}
+
+        valError = valError.append(row1, ignore_index=True)
+        valErrorLenet = valErrorLenet.append(row2, ignore_index=True)
+        valErrorTrain = valErrorTrain.append(row3, ignore_index=True)
+        valErrorLenetTrain = valErrorLenetTrain.append(row4, ignore_index=True)
 
         print(depth)
-    ax = valError.plot(x = "depth", y = "error", kind = "line", color = "red", label = "Pixel Features")
-    valErrorLenet.plot(x = "depth", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
-                        title = "Validation Error With Varying Max Depth Values", ylabel = "Validation Error", xlabel = "Max Depth Values")
-    plt.show()
-    
-    minL2 = 0.01
-    maxL2 = 0.11
 
-    L2s = np.arange(minL2, maxL2, 0.01)
+    ax = valError.plot(x = "depth", y = "error", kind = "line", color = "red", label = "Pixel Features (Validation)")
+    ax2 = valErrorTrain.plot(x = "depth", y = "error", ax = ax, kind = "line", color = "green", label = "Pixel Features (Training)")
+    ax3 = valErrorLenetTrain.plot(x = "depth", y = "error", ax = ax2, kind = "line", color = "black", label = "LeNet5 Features (Training)")
+    valErrorLenet.plot(x = "depth", y = "error", kind = "line", ax = ax3, color = "blue", label = "LeNet5 Features (Validation)",
+                        title = "HGB Error With Varying Max Depth Values (MNIST)", ylabel = "Error", xlabel = "Max Depth Values")
+    plt.show()"""
 
-    valError = pd.DataFrame([], columns = ["l2", "error"])
-    valErrorLenet = pd.DataFrame([], columns = ["l2", "error"])
+    # Testing Part
+    model = HistGradientBoostingClassifier(learning_rate=0.1, max_iter=600, max_depth=100)
+    lenet_model = HistGradientBoostingClassifier(learning_rate=0.1, max_iter=600, max_depth=100)
 
-    for l2 in L2s:
-        model = HistGradientBoostingClassifier(l2_regularization=l2).fit(data, label)
-        lenetModel = HistGradientBoostingClassifier(l2_regularization=l2).fit(lenet, lenet_labels)
+    model.fit(x_train, y_train)
+    lenet_model.fit(x_train_lenet, y_train_lenet)
 
-        row = {"l2" : l2, "error" : 1 - model.score(validation, validation_labels)}
-        lenet_row = {"l2" : l2, "error" : 1 - lenetModel.score(lenet_validation, lenet_validation_labels)}
+    y_preds = model.predict(test)
+    y_preds_lenet = lenet_model.predict(lenet_test)
 
-        valError = valError.append(row, ignore_index=True)
-        valErrorLenet = valErrorLenet.append(lenet_row, ignore_index=True)
+    preds = [round(value) for value in y_preds]
+    lenet_preds = [round(value) for value in y_preds_lenet]
 
-        print(l2)
-    ax = valError.plot(x = "l2", y = "error", kind = "line", color = "red", label = "Pixel Features")
-    valErrorLenet.plot(x = "l2", y = "error", kind = "line", ax = ax, color = "blue", label = "LeNet5 Features",
-                        title = "Validation Error With Varying L2 Regularization", ylabel = "Validation Error", xlabel = "L2 Regularization Values")
-    plt.show()
+    error = 1 - accuracy_score(test_labels, preds)
+    lenet_error = 1 - accuracy_score(lenet_test_labels, lenet_preds)
 
+    print("HGB")
+    print(error)
+    print(lenet_error)
 
 def normalizeData(data):
     data = (data / 255)

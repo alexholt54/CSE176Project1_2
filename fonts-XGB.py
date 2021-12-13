@@ -49,7 +49,7 @@ def main():
 
     x_valid, x_test, y_valid, y_test = train_test_split(x_valid, y_valid, test_size=0.4, random_state=0)
 
-    rates = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7]
+    """rates = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7]
 
     valError = pd.DataFrame([], columns = ["rate", "error"])
     valErrorTrain = pd.DataFrame([], columns = ["rate", "error"])
@@ -82,31 +82,40 @@ def main():
     ax = valError.plot(x = "rate", y = "error", kind = "line", color = "red", label = "Validation")
     valErrorTrain.plot(x = "rate", y = "error", kind = "line", ax = ax, color = "blue", label = "Training",
                         title = "XGB Error With Varying Learning Rates (Fonts)", ylabel = "Error", xlabel = "Learning Rate")
-    plt.show()
-    
-    quit()
-    
-    #Change Paramters here:
-        
-    minTrees = 100
-    maxTrees = 1000
+    plt.show()"""
 
-    trees = list(range(minTrees, maxTrees, 100))
+    trees = [1, 10, 250, 500, 1000]
 
-    valError = pd.DataFrame([], columns = ["trees", "error"])
+    valError = pd.DataFrame([], columns = ["tree", "error"])
+    valErrorTrain = pd.DataFrame([], columns = ["tree", "error"])
 
     for tree in trees:
-        model = xgb.XGBClassifier(n_estimators = tree, use_label_encoder=False)
-        model.fit(trainingSet, trainingLabels)
+        model = XGBClassifier(n_estimators = tree, use_label_encoder=False)
+        model.fit(x_train, y_train)
 
-        row = {"trees" : tree, "error" : 1 - model.score(validationSet, validationLabels)}
+        y_preds_train = model.predict(x_train)
+        y_preds = model.predict(x_valid)
 
-        valError = valError.append(row, ignore_index=True)
+        numCorrect = 0
+        for i in range(len(y_train)):
+            if y_train[i] == y_preds_train[i]:
+                numCorrect += 1
+        train_error = 1 - (numCorrect / len(y_train))
+        numCorrect = 0
+        for i in range(len(y_valid)):
+            if y_valid[i] == y_preds[i]:
+                numCorrect += 1
+        error = 1 - (numCorrect / len(y_valid))
 
-        print(tree)
+        row1 = {"tree" : tree, "error" : error}
+        row3 = {"tree" : tree, "error" : train_error}
 
-    ax = valError.plot(x = "trees", y = "error", kind = "line", color = "red", label = "Pixel Features",
-                        title = "Validation Error With Varying Number of Trees", ylabel = "Validation Error", xlabel = "Number of Trees")
+        valError = valError.append(row1, ignore_index=True)
+        valErrorTrain = valErrorTrain.append(row3, ignore_index=True)
+
+    ax = valError.plot(x = "tree", y = "error", kind = "line", color = "red", label = "Validation")
+    valErrorTrain.plot(x = "tree", y = "error", kind = "line", ax = ax, color = "blue", label = "Training",
+                        title = "XGB Error With Varying Number of Trees (Fonts)", ylabel = "Error", xlabel = "Number of Trees")
     plt.show()
 
 # Call this to save data file to your machine

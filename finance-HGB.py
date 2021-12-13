@@ -4,30 +4,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
 import os
 import glob
 import csv
 
 def main():
-
-    # Data reading will go here...
-
-    loadDataFile()
     df = pd.read_csv("datasets/allFinance.csv")
-
-    print(np.shape(df))
-
-    df = df.fillna(0)
-
-    print(np.shape(df))
 
     labels = df["PRICE VAR [%]"].values
     labels = labels.flatten()
 
-    print(np.shape(labels))
-
-    # Change parameters here
-    model = HistGradientBoostingRegressor()
+    df = df.drop(["PRICE VAR [%]", "Unnamed: 0"], axis =1)
+    df = df.to_numpy()
 
 
 # Call this to save data file to your machine
