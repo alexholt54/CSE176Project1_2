@@ -15,19 +15,12 @@ from xgboost.sklearn import XGBClassifier
 
 def main():
 
-    # Data reading will go here...
-    # 200 images from each file ~30k
-    #70 for validation/testing
-
     df = pd.read_csv("datasets/allFont.csv")
-
-    #print(np.shape(df))
 
     labels = df["font"].values
     df = df.drop(['font', 'Unnamed: 0'], axis=1)
+    data = df.to_numpy()
 
-    
-    
     labels = labels.flatten()
 
     for i in range(len(labels)):
@@ -52,47 +45,36 @@ def main():
         elif labels[i] == 'MODERN':
             labels[i] = 9
 
+    x_train, x_valid, y_train, y_valid = train_test_split(data, labels, test_size=0.33, random_state=0)
 
-    x_train, x_valid2, y_train, y_valid2 = train_test_split(df, labels, test_size=0.33, random_state=0)
-
-    x_valid, x_test, y_valid, y_test = train_test_split(x_valid2, y_valid2, test_size=0.4, random_state=0)
-
-
-    train = xgb.DMatrix(data = x_train, label = y_train)
-    valid = xgb.DMatrix(data = x_valid, label = y_valid)
+    x_valid, x_test, y_valid, y_test = train_test_split(x_valid, y_valid, test_size=0.4, random_state=0)
 
     rates = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7]
 
     valError = pd.DataFrame([], columns = ["rate", "error"])
     valErrorTrain = pd.DataFrame([], columns = ["rate", "error"])
 
-    print(y_train)
-
     for rate in rates:
-        params = {
-            "learning_rate" : rate,
-        }
 
-        model = xgb.train(params, train)
+        model = XGBClassifier(learning_rate = rate, use_label_encoder=False)
+        model.fit(x_train, y_train)
 
+        y_preds_train = model.predict(x_train)
+        y_preds = model.predict(x_valid)
 
-
-        y_preds_train = model.predict(train)
-        y_preds = model.predict(valid)
-
-        #preds = [round(value) for value in y_preds]
-        #preds_train = [round(value) for value in y_preds_train]
-
-        print(y_preds)
-        print(y_preds_train)
-        #print(preds)
-        #print(preds_train)
-
-        error = 1 - accuracy_score(y_valid, y_preds)
-        train_error = 1 - accuracy_score(y_train, y_preds_train)
+        numCorrect = 0
+        for i in range(len(y_train)):
+            if y_train[i] == y_preds_train[i]:
+                numCorrect += 1
+        train_error = 1 - (numCorrect / len(y_train))
+        numCorrect = 0
+        for i in range(len(y_valid)):
+            if y_valid[i] == y_preds[i]:
+                numCorrect += 1
+        error = 1 - (numCorrect / len(y_valid))
 
         row1 = {"rate" : rate, "error" : error}
-        row3= {"rate" : rate, "error" : train_error}
+        row3 = {"rate" : rate, "error" : train_error}
 
         valError = valError.append(row1, ignore_index=True)
         valErrorTrain = valErrorTrain.append(row3, ignore_index=True)

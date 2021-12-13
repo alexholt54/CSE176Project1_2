@@ -173,7 +173,6 @@ def main():
         model = xgb.train(params, train)
         lenet_model = xgb.train(params, train_lenet)
 
-
         y_preds_train = model.predict(train)
         y_preds = model.predict(valid)
 
