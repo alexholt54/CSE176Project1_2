@@ -49,7 +49,7 @@ def main():
 
     x_train_lenet, x_valid_lenet, y_train_lenet, y_valid_lenet = train_test_split(lenet, lenet_labels, test_size=0.2, random_state=0)
 
-    """ trees = [1, 10, 100, 500, 1000]
+    trees = [1, 10, 100, 500, 1000]
 
     valError = pd.DataFrame([], columns = ["tree", "error"])
     valErrorLenet = pd.DataFrame([], columns = ["tree", "error"])
@@ -95,9 +95,9 @@ def main():
     ax3 = valErrorLenetTrain.plot(x = "tree", y = "error", ax = ax2, kind = "line", color = "black", label = "LeNet5 Features (Training)")
     valErrorLenet.plot(x = "tree", y = "error", kind = "line", ax = ax3, color = "blue", label = "LeNet5 Features (Validation)",
                         title = "Error With Varying Number of Trees (MNIST)", ylabel = "Error", xlabel = "Number of Trees")
-    plt.show() """
+    plt.show()
 
-    """ rates = [0.01, 0.05, 0.07, 0.1, 0.3]
+    rates = [0.01, 0.05, 0.07, 0.1, 0.3]
 
     valError = pd.DataFrame([], columns = ["rate", "error"])
     valErrorLenet = pd.DataFrame([], columns = ["rate", "error"])
@@ -145,9 +145,9 @@ def main():
     ax3 = valErrorLenetTrain.plot(x = "rate", y = "error", ax = ax2, kind = "line", color = "black", label = "LeNet5 Features (Training)")
     valErrorLenet.plot(x = "rate", y = "error", kind = "line", ax = ax3, color = "blue", label = "LeNet5 Features (Validation)",
                         title = "HGB Error With Varying Learning Rates (MNIST)", ylabel = "Error", xlabel = "Learning Rate Values")
-    plt.show() """
+    plt.show()
 
-    """depths = [1, 10, 100, 500, 1000]
+    depths = [1, 10, 100, 500, 1000]
 
     valError = pd.DataFrame([], columns = ["depth", "error"])
     valErrorLenet = pd.DataFrame([], columns = ["depth", "error"])
@@ -193,7 +193,7 @@ def main():
     ax3 = valErrorLenetTrain.plot(x = "depth", y = "error", ax = ax2, kind = "line", color = "black", label = "LeNet5 Features (Training)")
     valErrorLenet.plot(x = "depth", y = "error", kind = "line", ax = ax3, color = "blue", label = "LeNet5 Features (Validation)",
                         title = "HGB Error With Varying Max Depth Values (MNIST)", ylabel = "Error", xlabel = "Max Depth Values")
-    plt.show()"""
+    plt.show()
 
     # Testing Part
     model = HistGradientBoostingClassifier(learning_rate=0.1, max_iter=600, max_depth=100)
